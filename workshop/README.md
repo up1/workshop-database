@@ -2,6 +2,7 @@
 * Create tables
 * [Join](joins.md)
 * [Self-join](self-join.md)
+* [Index](index.md)
 
 ## Create database and pgadmin with Docker
 ```
