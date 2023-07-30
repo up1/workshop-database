@@ -6,6 +6,9 @@
 * [PostgreSQL server](https://www.postgresql.org/)
 * [pgAdmin](https://www.pgadmin.org/)
 
+## Workshop
+* [Go to workshop](https://github.com/up1/workshop-database/tree/main/workshop)
+
 ## List of topics
 * Normalization and Denormalization
 * Design for read and Design for write
