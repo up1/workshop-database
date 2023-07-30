@@ -3,6 +3,7 @@
 * [Join](joins.md)
 * [Self-join](self-join.md)
 * [Index](index.md)
+* [Partition table](partition.md)
 * [Slow query](slow-query.md)
 
 ## Create database and pgadmin with Docker
