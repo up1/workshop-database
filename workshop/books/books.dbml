@@ -1,0 +1,51 @@
+Table "category" {
+  "category_id" UUID [pk, default: `uuid_generate_v4()`]
+  "name" VARCHAR(255) [unique, not null]
+}
+
+Table "author" {
+  "author_id" UUID [pk, default: `uuid_generate_v4()`]
+  "full_name" VARCHAR(255) [unique, not null]
+}
+
+Table "publisher" {
+  "publisher_id" UUID [pk, default: `uuid_generate_v4()`]
+  "name" VARCHAR(255) [unique, not null]
+}
+
+Table "book" {
+  "book_id" UUID [pk, default: `uuid_generate_v4()`]
+  "isbn" VARCHAR(14) [unique]
+  "title" VARCHAR(255) [not null]
+  "publication_date" DATE [not null]
+  "publisher_id" UUID
+  "rating" "NUMERIC(4, 3)"
+}
+
+Table "book_category" {
+  "book_id" UUID
+  "category_id" UUID
+
+Indexes {
+  (book_id, category_id) [pk]
+}
+}
+
+Table "book_author" {
+  "book_id" UUID
+  "author_id" UUID
+
+Indexes {
+  (book_id, author_id) [pk]
+}
+}
+
+Ref:"publisher"."publisher_id" < "book"."publisher_id"
+
+Ref:"book"."book_id" < "book_category"."book_id"
+
+Ref:"category"."category_id" < "book_category"."category_id"
+
+Ref:"book"."book_id" < "book_author"."book_id"
+
+Ref:"author"."author_id" < "book_author"."author_id"

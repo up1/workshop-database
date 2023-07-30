@@ -26,4 +26,37 @@ Get max connection of database = 200
 show max_connections;
 ```
 
-## Create schema of database
+## Design and Create schema of tables
+* Open file `books/create_table.sql`
+  * category
+  * author
+  * publisher
+  * book
+  * book_category
+  * book_author
+
+[Convert a SQL file to DBML](https://dbml.dbdiagram.io/cli/#convert-a-sql-file-to-dbml)
+```
+$cd books
+$npm install -g @dbml/cli
+$sql2dbml --postgres create_tables.sql -o books.dbml
+```
+
+## Add sample data
+* Open file `books/data.sql`
+  * category
+  * author
+  * publisher
+  * book
+  * book_category
+  * book_author
+
+## Generate test data (more)
+```
+INSERT INTO book (isbn, title, publication_date, rating)
+SELECT SUBSTR(MD5(RANDOM()::TEXT), 0, 14), 
+       MD5(RANDOM()::TEXT), 
+       DATE '2023-08-01' + CAST(RANDOM() * (DATE '2023-08-01' - DATE '2023-08-01') AS INT),
+       ROUND((1 + RANDOM() * 4)::numeric, 3)
+  FROM generate_series(1, 100000);
+```
