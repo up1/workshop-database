@@ -59,7 +59,7 @@ $sql2dbml --postgres create_tables.sql -o books.dbml
 INSERT INTO book (isbn, title, publication_date, rating)
 SELECT SUBSTR(MD5(RANDOM()::TEXT), 0, 14), 
        MD5(RANDOM()::TEXT), 
-       DATE '2023-08-01' + CAST(RANDOM() * (DATE '2023-08-01' - DATE '2023-08-01') AS INT),
+       DATE '2010-01-01' + CAST(RANDOM() * (DATE '2024-01-01' - DATE '2010-01-01') AS INT),
        ROUND((1 + RANDOM() * 4)::numeric, 3)
   FROM generate_series(1, 100000);
 ```
