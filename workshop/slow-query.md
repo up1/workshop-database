@@ -1,4 +1,4 @@
-# Worlshop with slow query
+# Workshop with slow query
 * 
 
 ## Step 1 :: Enable extension `pg_stat_statements` to enable process to detect slow query
