@@ -1,5 +1,11 @@
 # Workshop with slow query
-* 
+
+
+## Step 0 :: Install
+```
+perl -pi -e "s/#shared_preload_libraries = ''/shared_preload_libraries = 'pg_stat_statements'/g" /var/lib/postgresql/data/postgresql.conf
+```
+Restart server ...
 
 ## Step 1 :: Enable extension `pg_stat_statements` to enable process to detect slow query
 * [shared_preload_libraries=pg_stat_statements](https://www.postgresql.org/docs/current/runtime-config-client.html#RUNTIME-CONFIG-CLIENT-PRELOAD)
