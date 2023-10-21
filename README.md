@@ -28,5 +28,6 @@
 * Tuning
   * Explain query
   * Index
+  * Slow query
   * Sharding
   * Replicate
