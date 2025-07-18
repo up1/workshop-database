@@ -1,6 +1,11 @@
 # Workshop Database
 * RDBMS
   * PostgreSQL
+* NoSQL
+  * Redis
+  * MongoDB
+  * Elasticsearch
+  * Neo4j  
 
 ## Software requirements
 * [PostgreSQL server](https://www.postgresql.org/)
@@ -31,3 +36,25 @@
   * Slow query
   * Sharding
   * Replicate
+* Database architecture
+  * Master-slave
+  * Multi-master
+* PostgreSQL database
+  * Setup and config
+* Essential configuration and tuning
+  * Max connection
+  * Shared buffers
+  * Max memory
+  * Effective cache size
+  * Checkpoint timeout
+  * WAL buffers
+* Setup Streaming Replication (Log Shipping/Mirror)
+  * Monitoring Replication
+  * Check replication status
+  * Failover (Manual)
+  * Replication lag 
+* Monitoring
+  * Metric
+  * Slow log
+  * Logging
+
