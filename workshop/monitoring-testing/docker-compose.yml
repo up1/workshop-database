@@ -1,0 +1,29 @@
+services:
+  db:
+    image: postgres:17
+    container_name: db
+    env_file:
+      - .env
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./postgres/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+    command: [
+      "postgres",
+      "-c", "config_file=/etc/postgresql/postgresql.conf"
+    ]
+
+  pgbench:
+    image: postgres:17
+    container_name: pgbench
+    entrypoint: >
+      bash -c "
+        # initialize pgbench with scale factor 50
+        PGPASSWORD=${POSTGRES_PASSWORD:-postgres} pgbench -h db -U ${POSTGRES_USER:-postgres} -i -s 50 postgres;
+        # run a 5-minute test with 50 clients, 4 threads
+        PGPASSWORD=${POSTGRES_PASSWORD:-postgres} pgbench -h db -U ${POSTGRES_USER:-postgres} -c 50 -j 4 -t 300 postgres;
+      "
+    env_file:
+      - .env
+
+volumes:
+  pgdata:
