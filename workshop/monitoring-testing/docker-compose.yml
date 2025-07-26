@@ -4,6 +4,8 @@ services:
     container_name: db
     env_file:
       - .env
+    ports:
+      - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./postgres/postgresql.conf:/etc/postgresql/postgresql.conf:ro
