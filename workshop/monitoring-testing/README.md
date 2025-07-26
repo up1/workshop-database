@@ -45,6 +45,7 @@ List of parameters
 * show work_mem;
 * show wal_buffers;
 * show effective_cache_size;
+* show log_min_duration_statement;
 
 ## 2. Start testing with pgbench
 ```
