@@ -103,7 +103,7 @@ select count(*) from books
 select count(*) from reviews;
 ```
 
-### Analyzr tables !!
+### Analyzer tables !!
 * After inserting large amounts of data, run ANALYZE to update statistics. This helps the query planner make good decisions
 ```
 ANALYZE;
@@ -133,7 +133,48 @@ LIMIT 100;
 ```
 
 
-## 4. Find the Slow Query in Logs
+## 4. Find the Slow Query in Logs and pg_stat_statements
+```
+SELECT pg_stat_statements_reset();
 
+SELECT query, calls, total_exec_time, mean_exec_time 
+FROM pg_stat_statements 
+ORDER BY total_exec_time DESC 
+LIMIT 10;
+```
 
 ## 5. Solve the Slow Query
+
+### 5.1 Explain query
+```
+EXPLAIN ANALYZE
+SELECT
+    b.book_id,
+    b.title,
+    a.first_name,
+    a.last_name,
+    g.genre_name,
+    b.price
+FROM
+    books b
+JOIN
+    authors a ON b.author_id = a.author_id
+JOIN
+    genres g ON b.genre_id = g.genre_id
+WHERE
+    b.title ILIKE '%Adventure%' AND b.price BETWEEN 20 AND 30
+ORDER BY
+    b.title
+LIMIT 100;
+```
+
+### 5.2 Solutions ?
+* Create an Index
+  * Discuss that indexes consume disk space and add overhead to INSERT, UPDATE, DELETE operations
+  * This is why you don't index everything
+* Re-Run & Analyze (Measure Again!)
+* More !!
+  * ORDER BY 
+  * Can the application filter more precisely
+  * Look for other bottlenecks (CPU, I/O, network)
+  * Consider specific hardware or PostgreSQL version features
