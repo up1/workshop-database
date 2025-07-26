@@ -110,6 +110,27 @@ ANALYZE;
 ```
 
 ## 3. Step-by-Step to Create a Slow Query
+```
+-- Query 1: Search for books with "Adventure" in the title and price between 20 and 30
+SELECT
+    b.book_id,
+    b.title,
+    a.first_name,
+    a.last_name,
+    g.genre_name,
+    b.price
+FROM
+    books b
+JOIN
+    authors a ON b.author_id = a.author_id
+JOIN
+    genres g ON b.genre_id = g.genre_id
+WHERE
+    b.title ILIKE '%Adventure%' AND b.price BETWEEN 20 AND 30
+ORDER BY
+    b.title DESC
+LIMIT 100;
+```
 
 
 ## 4. Find the Slow Query in Logs
