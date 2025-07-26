@@ -3,7 +3,7 @@
 
 ## 1. Part 1: Preparation - Configure PostgreSQL Logging
 ```
-log_min_duration_statement = 250 # in milliseconds. Set to a low value for testing (e.g., 0 for all queries)
+log_min_duration_statement = 100 # in milliseconds. Set to a low value for testing (e.g., 0 for all queries)
                                  # but typically 100-1000 for production.
 ```
 
@@ -131,7 +131,6 @@ ORDER BY
     b.title DESC
 LIMIT 100;
 ```
-
 
 ## 4. Find the Slow Query in Logs and pg_stat_statements
 ```
