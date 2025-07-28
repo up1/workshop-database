@@ -1,0 +1,37 @@
+services:
+  primary:
+    image: postgres:17
+    container_name: primary
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_INITDB_ARGS: "--data-checksums"
+      POSTGRES_HOST_AUTH_METHOD: trust
+    volumes:
+      - ./primary/init.sql:/docker-entrypoint-initdb.d/1.sql
+      - ./primary/create_pg_hba.sh:/docker-entrypoint-initdb.d/2.sh
+      - ./primary/postgresql.conf:/etc/postgresql/postgresql.conf
+    ports:
+      - "5432:5432"
+    networks:
+      - pgnet
+
+  replica:
+    image: postgres:17
+    container_name: replica
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    depends_on:
+      - primary
+    ports:
+      - "5433:5432"
+    volumes:
+      - ./replica/standby.sh:/docker-entrypoint-initdb.d/standby.sh
+      - ./replica/postgresql.conf:/etc/postgresql/postgresql.conf
+    networks:
+      - pgnet
+
+networks:
+  pgnet:
+    driver: bridge
