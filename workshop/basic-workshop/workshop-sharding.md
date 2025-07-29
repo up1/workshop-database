@@ -49,3 +49,19 @@ CREATE TABLE orders (
     notes TEXT
 );
 ```
+
+### 1.3 Try with coding
+* In folder `/app/`
+
+### 1.4 Problems with Cross-shard queries
+* How would you get the total orders across all customers for a specific order_date ?
+* Requires fanning out queries to all shards and aggregating results in the application
+* Show how a query like SELECT COUNT(*) FROM orders WHERE order_date = '2024-02-15' 
+  * need to be run on each shard and then summed up by the application
+
+### 1.5 Sharding Challenges and Considerations
+* Joins across shards
+* Data Rebalancing
+* Shard Key Choice
+* Schema Evolution
+* Monitoring and Management
