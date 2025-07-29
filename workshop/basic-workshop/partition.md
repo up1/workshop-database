@@ -61,6 +61,10 @@ SELECT SUBSTR(MD5(RANDOM()::TEXT), 0, 14),
        DATE '2010-01-01' + CAST(RANDOM() * (DATE '2024-01-01' - DATE '2010-01-01') AS INT),
        ROUND((1 + RANDOM() * 4)::numeric, 3)
 FROM generate_series(1, 100000);
+
+ANALYZE book;
+
+SELECT count(*) FROM book;
 ```
 
 ## Step 7 :: Query data in only one partition
@@ -69,7 +73,7 @@ EXPLAIN ANALYZE
 SELECT EXTRACT(YEAR FROM b.publication_date) AS pub_year,
        COUNT(*)
 FROM book b
-WHERE b.publication_date > '2020-08-01' 
+WHERE b.publication_date = '2020-08-01' 
 GROUP BY pub_year;
 ```
 
@@ -81,4 +85,16 @@ SELECT EXTRACT(YEAR FROM b.publication_date) AS pub_year,
 FROM book b
 WHERE b.publication_date > '2010-01-01' 
 GROUP BY pub_year;
+```
+
+## Step 9 :: Size of index ?
+```
+SELECT 
+    schemaname,
+    relname,
+    indexrelname,
+    pg_size_pretty(pg_relation_size(indexrelid)) AS index_size
+FROM pg_stat_user_indexes 
+WHERE relname like 'book%'
+ORDER BY pg_relation_size(indexrelid) DESC;
 ```
