@@ -34,6 +34,7 @@ SELECT pg_stat_statements_reset();
 # 4. pg_stat_statements
 SELECT query, calls, total_exec_time, mean_exec_time 
 FROM pg_stat_statements 
+WHERE total_exec_time > 200
 ORDER BY total_exec_time DESC 
 LIMIT 10;
 ```
