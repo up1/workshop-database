@@ -20,24 +20,15 @@
 
 ### 1.1 Create 3 shards (database schema)
 ```
-$docker compose exec db bash
-$psql -U monitoring -d postgres
+$docker compose up -d pg_shard0
+$docker compose up -d pg_shard1
+$docker compose up -d pg_shard2
 
-
-$CREATE DATABASE shard_0_db;
-$CREATE DATABASE shard_1_db;
-$CREATE DATABASE shard_2_db;
-
-# List all databases
-\l
+$docker compose ps
 ```
 
 ### 1.2 Create table in 3 databases;
 ```
-\c shard_0_db
-\c shard_1_db
-\c shard_2_db
-
 CREATE TABLE orders (
     order_id BIGSERIAL PRIMARY KEY,
     customer_id INT NOT NULL,
