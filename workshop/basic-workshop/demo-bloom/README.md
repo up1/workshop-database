@@ -77,17 +77,8 @@ ANALYZE users;
   * B-trees are designed for fast lookups and range scans
 
 
-## Test Performance (With Bloom Index)
-* Use `EXISTS` or `IN` clause with a subquery
-
-```
-EXPLAIN ANALYZE SELECT EXISTS (
-    SELECT 1 FROM users 
-    WHERE username = 'user_0000001' 
-    AND email = 'email_0000001@example.com'
-    AND status = 'active'
-);
-```
+## Test Performance
+* B-tree vs Bloom index
 
 ## Size on indexes ?
 ```
