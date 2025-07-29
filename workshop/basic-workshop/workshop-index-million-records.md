@@ -1,8 +1,7 @@
 # PostgreSQL Index Workshop: Scaling with Millions of Order Records
 * PostgreSQL index types 
   * B-tree index
-  * Hash index
-  * GIN/BRIN for "inverted" index
+  * Inverted Index (GIN and GiST)
   * Bitmap index
 
 ## 1. Generate data for testing
@@ -76,4 +75,87 @@ ANALYZE orders;
 
 -- Check record count
 SELECT COUNT(*) FROM orders;
+```
+
+## 2. Working with B-tree index
+* Cardinality: Most effective on columns with high cardinality (many unique values)
+* Selectivity: Queries that retrieve a small percentage of rows will benefit most
+* Index Bloat: Frequent updates/deletes can lead to bloat
+  * VACUUM FULL (offline) or REINDEX (online with lock) can reclaim space
+  * Autovacuum helps
+* Maintenance Overhead: Each insert/update/delete on an indexed column requires index modification
+  * More indexes = more write overhead
+
+### 2.1 Start with no-index !!
+```
+EXPLAIN ANALYZE SELECT * FROM orders WHERE customer_id = 500000;
+
+EXPLAIN ANALYZE SELECT * FROM orders WHERE order_date BETWEEN '2025-01-01' AND '2025-01-31';
+
+EXPLAIN ANALYZE SELECT * FROM orders WHERE total_amount > 5000 ORDER BY total_amount DESC LIMIT 100;
+
+EXPLAIN ANALYZE SELECT * FROM orders WHERE customer_id = 123456 AND status = 'Delivered';
+```
+
+### 2.2 Create B-tree index
+```
+CREATE INDEX idx_orders_customer_id ON orders (customer_id);
+CREATE INDEX idx_orders_order_date ON orders (order_date);
+CREATE INDEX idx_orders_total_amount ON orders (total_amount);
+
+-- Composite index for multiple columns (useful for queries filtering on both)
+CREATE INDEX idx_orders_customer_status ON orders (customer_id, status);
+
+
+ANALYZE orders;
+```
+
+### 2.3 Query with index
+```
+EXPLAIN ANALYZE SELECT * FROM orders WHERE customer_id = 500000;
+
+EXPLAIN ANALYZE SELECT * FROM orders WHERE order_date BETWEEN '2025-01-01' AND '2025-01-31';
+
+EXPLAIN ANALYZE SELECT * FROM orders WHERE total_amount > 5000 ORDER BY total_amount DESC LIMIT 100;
+
+EXPLAIN ANALYZE SELECT * FROM orders WHERE customer_id = 123456 AND status = 'Delivered';
+```
+
+### 2.4 Covering Index
+* Explain the benefit of Index Only Scan where the query can be fully satisfied by the index without touching the table.
+```
+CREATE INDEX idx_orders_customer_id_covered ON orders (customer_id) INCLUDE (total_amount, status);
+
+EXPLAIN ANALYZE SELECT customer_id, total_amount, status FROM orders WHERE customer_id = 500000;
+```
+
+## 3. Inverted Index (GIN and GiST for PostgreSQL)
+* GIN (Generalized Inverted Index) 
+  * Ideal for indexing JSONB, arrays, and full-text search (tsvector)
+* GiST (Generalized Search Tree)
+  * More general-purpose tree structure, suitable for geometric data, full-text search, and specific operators (e.g., k-nearest neighbor)
+* Indexing complex data types where a single value can have multiple searchable components
+
+### 3.1 Working with GIN
+* Space Usage: GIN indexes can be very large because they index every element
+* Write Performance: GIN indexes can be slower to update/insert due to their complexity
+* Specific Operators: Ensure your queries use operators that the GIN/GiST index can utilize (e.g., @>, ?, @@ for tsvector)
+
+No Index on JSONB
+```
+EXPLAIN ANALYZE SELECT * FROM orders WHERE product_details ->> 'main_category' = 'Electronics';
+
+EXPLAIN ANALYZE SELECT * FROM orders WHERE product_details @> '{"has_discount": true}';
+```
+
+Create GIN Index on JSONB
+* Observe Bitmap Index Scan or Index Scan
+```
+-- For ->> (contains operator)
+CREATE INDEX idx_orders_main_category ON orders ((product_details ->> 'main_category'));
+
+-- For specific key-value lookups (JSONB operations like ->>)
+-- This requires a specific operator class or expression index for efficient use.
+-- For example, to index the 'main_category' key:
+CREATE INDEX idx_orders_product_details_main_category_gin ON orders USING GIN ((to_tsvector('english', product_details->>'main_category')));
 ```
