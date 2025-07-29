@@ -204,3 +204,60 @@ EXPLAIN ANALYZE SELECT * FROM orders WHERE status = 'Shipped' AND order_date > '
 * Monitoring: Monitor database performance 
   * e.g., pg_stat_statements, pg_buffercache 
     * to identify slow queries and underutilized indexes
+
+
+## More
+Query size of indexes
+```sql
+-- Query to get all index sizes for the orders table in human-readable format
+SELECT 
+    schemaname,
+    relname,
+    indexrelname,
+    pg_size_pretty(pg_relation_size(indexrelid)) AS index_size,
+    pg_size_pretty(pg_total_relation_size(indexrelid)) AS total_index_size
+FROM pg_stat_user_indexes 
+WHERE relname = 'orders'
+ORDER BY pg_relation_size(indexrelid) DESC;
+
+-- Alternative query with more details including index type and definition
+SELECT 
+    t.tablename,
+    i.indexrelname,
+    pg_size_pretty(pg_relation_size(i.indexrelid)) AS index_size,
+    pg_get_indexdef(i.indexrelid) AS index_definition,
+    am.amname AS index_type
+FROM pg_stat_user_indexes i
+JOIN pg_tables t ON i.relname = t.tablename
+JOIN pg_class c ON i.indexrelid = c.oid
+JOIN pg_am am ON c.relam = am.oid
+WHERE t.tablename = 'orders'
+ORDER BY pg_relation_size(i.indexrelid) DESC;
+
+-- Query to compare table size vs total index size
+SELECT 
+    tablename,
+    pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename)) AS total_table_size,
+    pg_size_pretty(pg_relation_size(schemaname||'.'||tablename)) AS table_data_size,
+    pg_size_pretty(
+        pg_total_relation_size(schemaname||'.'||tablename) - 
+        pg_relation_size(schemaname||'.'||tablename)
+    ) AS total_indexes_size,
+    ROUND(
+        (pg_total_relation_size(schemaname||'.'||tablename) - pg_relation_size(schemaname||'.'||tablename))::NUMERIC 
+        / pg_relation_size(schemaname||'.'||tablename) * 100, 2
+    ) AS index_to_table_ratio_percent
+FROM pg_tables 
+WHERE tablename = 'orders';
+
+-- Query to get all database indexes sorted by size (useful for database-wide analysis)
+SELECT 
+    schemaname,
+    relname,
+    indexrelname,
+    pg_size_pretty(pg_relation_size(indexrelid)) AS index_size,
+    pg_relation_size(indexrelid) AS index_size_bytes
+FROM pg_stat_user_indexes 
+ORDER BY pg_relation_size(indexrelid) DESC
+LIMIT 20;
+```
