@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .query-text {
+            font-family: 'Courier New', monospace;
+            font-size: 0.85em;
+            white-space: pre-wrap;
+            word-break: break-all;
+            max-width: 400px;
+        }
+        .metric-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .table-container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        .refresh-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+        .status-success { background-color: #28a745; }
+        .status-error { background-color: #dc3545; }
+        .loading { opacity: 0.6; }
+    </style>
+</head>
+<body class="bg-light">
+    <nav class="navbar navbar-dark bg-dark">
+        <div class="container-fluid">
+            <span class="navbar-brand mb-0 h1">
+                <i class="fas fa-database"></i> <%= title %>
+            </span>
+            <div class="d-flex">
+                <span class="text-light me-3">
+                    <span id="status-indicator" class="status-indicator status-success"></span>
+                    Last Updated: <span id="last-updated"><%= timestamp %></span>
+                </span>
+                <button class="btn btn-outline-light btn-sm me-2" onclick="testConnection()">
+                    <i class="fas fa-plug"></i> Test Connection
+                </button>
+                <button class="btn btn-warning btn-sm me-2" onclick="resetStats()">
+                    <i class="fas fa-trash"></i> Reset Stats
+                </button>
+                <button class="btn btn-success btn-sm" onclick="refreshData()">
+                    <i class="fas fa-sync-alt"></i> Refresh
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-4">
+        <!-- Summary Cards -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="metric-card text-center">
+                    <h4 id="total-queries"><%= statements.length %></h4>
+                    <p class="mb-0">Total Queries</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="metric-card text-center">
+                    <h4 id="total-calls">
+                        <%= statements.reduce((sum, stmt) => sum + parseInt(stmt.calls || 0), 0) %>
+                    </h4>
+                    <p class="mb-0">Total Calls</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="metric-card text-center">
+                    <h4 id="total-exec-time">
+                        <%= statements.length > 0 ? Math.round(statements.reduce((sum, stmt) => sum + parseFloat(stmt.total_exec_time || 0), 0)) : 0 %>ms
+                    </h4>
+                    <p class="mb-0">Total Exec Time</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="metric-card text-center">
+                    <h4 id="avg-exec-time">
+                        <%= statements.length > 0 ? Math.round(statements.reduce((sum, stmt) => sum + parseFloat(stmt.mean_exec_time || 0), 0) / statements.length) : 0 %>ms
+                    </h4>
+                    <p class="mb-0">Avg Exec Time</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Table -->
+        <div class="table-container">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover mb-0" id="stats-table">
+                    <thead class="table-dark">
+                        <tr>
+                            <th style="width: 40%">Query</th>
+                            <th style="width: 10%">Calls</th>
+                            <th style="width: 15%">Total Exec Time (ms)</th>
+                            <th style="width: 15%">Mean Exec Time (ms)</th>
+                            <th style="width: 10%">Rows</th>
+                            <th style="width: 10%">Hit %</th>
+                        </tr>
+                    </thead>
+                    <tbody id="stats-tbody">
+                        <% statements.forEach((stmt, index) => { %>
+                        <tr>
+                            <td class="query-text"><%= stmt.query %></td>
+                            <td><span class="badge bg-primary"><%= stmt.calls %></span></td>
+                            <td>
+                                <span class="badge bg-<%= parseFloat(stmt.total_exec_time) > 1000 ? 'danger' : parseFloat(stmt.total_exec_time) > 500 ? 'warning' : 'success' %>">
+                                    <%= Math.round(parseFloat(stmt.total_exec_time)) %>
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge bg-<%= parseFloat(stmt.mean_exec_time) > 100 ? 'danger' : parseFloat(stmt.mean_exec_time) > 50 ? 'warning' : 'success' %>">
+                                    <%= Math.round(parseFloat(stmt.mean_exec_time)) %>
+                                </span>
+                            </td>
+                            <td><%= stmt.rows %></td>
+                            <td>
+                                <% if (stmt.hit_percent !== null) { %>
+                                    <span class="badge bg-<%= parseFloat(stmt.hit_percent) > 95 ? 'success' : parseFloat(stmt.hit_percent) > 80 ? 'warning' : 'danger' %>">
+                                        <%= Math.round(parseFloat(stmt.hit_percent)) %>%
+                                    </span>
+                                <% } else { %>
+                                    <span class="text-muted">N/A</span>
+                                <% } %>
+                            </td>
+                        </tr>
+                        <% }) %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <% if (statements.length === 0) { %>
+        <div class="text-center mt-5">
+            <i class="fas fa-chart-line fa-5x text-muted mb-3"></i>
+            <h3 class="text-muted">No query statistics available</h3>
+            <p class="text-muted">Run some queries to see statistics here, or check if pg_stat_statements extension is enabled.</p>
+        </div>
+        <% } %>
+    </div>
+
+    <!-- Toast notifications -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div id="notification-toast" class="toast" role="alert">
+            <div class="toast-header">
+                <strong class="me-auto">Notification</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+            </div>
+            <div class="toast-body" id="toast-message"></div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let autoRefreshInterval;
+        
+        function showToast(message, type = 'info') {
+            const toast = document.getElementById('notification-toast');
+            const toastBody = document.getElementById('toast-message');
+            const toastHeader = toast.querySelector('.toast-header');
+            
+            toastHeader.className = `toast-header bg-${type} text-white`;
+            toastBody.textContent = message;
+            
+            const bsToast = new bootstrap.Toast(toast);
+            bsToast.show();
+        }
+
+        function updateStatusIndicator(success) {
+            const indicator = document.getElementById('status-indicator');
+            indicator.className = `status-indicator ${success ? 'status-success' : 'status-error'}`;
+        }
+
+        async function refreshData() {
+            const table = document.getElementById('stats-table');
+            table.classList.add('loading');
+            
+            try {
+                const response = await fetch('/api/stats');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    updateTable(data.statements);
+                    updateSummaryCards(data.statements);
+                    document.getElementById('last-updated').textContent = new Date(data.timestamp).toLocaleString();
+                    updateStatusIndicator(true);
+                } else {
+                    throw new Error(data.error);
+                }
+            } catch (error) {
+                console.error('Refresh failed:', error);
+                showToast('Failed to refresh data: ' + error.message, 'danger');
+                updateStatusIndicator(false);
+            } finally {
+                table.classList.remove('loading');
+            }
+        }
+
+        function updateTable(statements) {
+            const tbody = document.getElementById('stats-tbody');
+            tbody.innerHTML = statements.map(stmt => `
+                <tr>
+                    <td class="query-text">${stmt.query}</td>
+                    <td><span class="badge bg-primary">${stmt.calls}</span></td>
+                    <td>
+                        <span class="badge bg-${parseFloat(stmt.total_exec_time) > 1000 ? 'danger' : parseFloat(stmt.total_exec_time) > 500 ? 'warning' : 'success'}">
+                            ${Math.round(parseFloat(stmt.total_exec_time))}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="badge bg-${parseFloat(stmt.mean_exec_time) > 100 ? 'danger' : parseFloat(stmt.mean_exec_time) > 50 ? 'warning' : 'success'}">
+                            ${Math.round(parseFloat(stmt.mean_exec_time))}
+                        </span>
+                    </td>
+                    <td>${stmt.rows}</td>
+                    <td>
+                        ${stmt.hit_percent !== null ? 
+                            `<span class="badge bg-${parseFloat(stmt.hit_percent) > 95 ? 'success' : parseFloat(stmt.hit_percent) > 80 ? 'warning' : 'danger'}">
+                                ${Math.round(parseFloat(stmt.hit_percent))}%
+                            </span>` : 
+                            '<span class="text-muted">N/A</span>'
+                        }
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function updateSummaryCards(statements) {
+            document.getElementById('total-queries').textContent = statements.length;
+            document.getElementById('total-calls').textContent = 
+                statements.reduce((sum, stmt) => sum + parseInt(stmt.calls || 0), 0);
+            document.getElementById('total-exec-time').textContent = 
+                Math.round(statements.reduce((sum, stmt) => sum + parseFloat(stmt.total_exec_time || 0), 0)) + 'ms';
+            document.getElementById('avg-exec-time').textContent = 
+                (statements.length > 0 ? Math.round(statements.reduce((sum, stmt) => sum + parseFloat(stmt.mean_exec_time || 0), 0) / statements.length) : 0) + 'ms';
+        }
+
+        async function resetStats() {
+            if (!confirm('Are you sure you want to reset all pg_stat_statements data?')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/reset', { method: 'POST' });
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showToast('Statistics reset successfully', 'success');
+                    setTimeout(refreshData, 1000);
+                } else {
+                    throw new Error(data.error);
+                }
+            } catch (error) {
+                console.error('Reset failed:', error);
+                showToast('Failed to reset statistics: ' + error.message, 'danger');
+            }
+        }
+
+        async function testConnection() {
+            try {
+                const response = await fetch('/api/test-connection');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showToast('Database connection successful', 'success');
+                    updateStatusIndicator(true);
+                } else {
+                    throw new Error(data.error);
+                }
+            } catch (error) {
+                console.error('Connection test failed:', error);
+                showToast('Connection test failed: ' + error.message, 'danger');
+                updateStatusIndicator(false);
+            }
+        }
+
+        // Auto-refresh every 30 seconds
+        function startAutoRefresh() {
+            autoRefreshInterval = setInterval(refreshData, 30000);
+        }
+
+        function stopAutoRefresh() {
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+            }
+        }
+
+        // Start auto-refresh on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            startAutoRefresh();
+        });
+
+        // Stop auto-refresh when page is hidden
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden) {
+                stopAutoRefresh();
+            } else {
+                startAutoRefresh();
+            }
+        });
+    </script>
+</body>
+</html>
