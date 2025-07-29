@@ -98,3 +98,66 @@ FROM pg_stat_user_indexes
 WHERE relname like 'book%'
 ORDER BY pg_relation_size(indexrelid) DESC;
 ```
+
+## Step 10 :: Delete no longer partitions !!!
+* [Retention policy for partition](https://github.com/pgpartman/pg_partman)
+
+### 10.1 List all partitions
+```
+SELECT
+    relnamespace::regnamespace AS schema_name,
+    relname AS partition_name
+FROM
+    pg_class
+WHERE
+    relispartition AND relname LIKE 'book_%';
+```
+
+### 10.2 List all partitions
+```
+-- Check if it's still a partition (should return no rows for the detached table)
+SELECT
+    relname
+FROM
+    pg_class
+WHERE
+    relispartition AND relname = 'your_partition_name';
+
+
+-- DETACH PARTITION
+ALTER TABLE book DETACH PARTITION book_y1990 CONCURRENTLY;
+
+
+-- Check again !!
+SELECT
+    relname
+FROM
+    pg_class
+WHERE
+    relispartition AND relname = 'your_partition_name';
+```
+
+
+### 10.3 Dump data from partition
+* pg_dump
+* export files from psql
+  * CSV
+  * [Parquet](https://parquet.apache.org/)
+```
+$pg_dump -U your_user -h your_host -p your_port -d your_database -t your_partition_name -Fc > /path/to/backup/your_partition_name.dump
+
+$psql -U your_user -h your_host -p your_port -d your_database -c "COPY your_partition_name TO '/path/to/backup/your_partition_name.csv' WITH (FORMAT CSV, HEADER TRUE);"
+```
+
+Export to [Parquet extension](https://github.com/CrunchyData/pg_parquet/)
+```
+CREATE EXTENSION pg_parquet;
+
+COPY (SELECT * FROM book) TO '/tmp/book.parquet' WITH (format 'parquet');
+```
+
+### 10.4 Drop table
+```
+DROP TABLE book_y1990;
+```
+
