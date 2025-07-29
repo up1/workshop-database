@@ -1,0 +1,51 @@
+# Workshop :: Sharding with PostgreSQL
+* Sharding
+  * Distributing data across multiple independent database instances (servers)
+  * Shared-Nothing Architecture: Each shard is self-contained
+* Why sharding ?
+  * To overcome single-server limitations (CPU, RAM, Disk I/O)
+* Sharding Strategies
+  * Range-Based Sharding
+  * Hash or key-Based Sharding
+  * List/Directory-Based Sharding
+  * Composite Sharding
+  * Sharding Key
+* PostgreSQL Sharding Approaches
+  * Application-Level Sharding
+  * Middleware/Proxy-Based Sharding
+
+## 1. Application-Level Sharding for Order Data
+* Shard orders data by customer_id across multiple PostgreSQL instances
+
+
+### 1.1 Create 3 shards (database schema)
+```
+$docker compose exec db bash
+$psql -U monitoring -d postgres
+
+
+$CREATE DATABASE shard_0_db;
+$CREATE DATABASE shard_1_db;
+$CREATE DATABASE shard_2_db;
+
+# List all databases
+\l
+```
+
+### 1.2 Create table in 3 databases;
+```
+\c shard_0_db
+\c shard_1_db
+\c shard_2_db
+
+CREATE TABLE orders (
+    order_id BIGSERIAL PRIMARY KEY,
+    customer_id INT NOT NULL,
+    order_date TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW(),
+    total_amount NUMERIC(10, 2) NOT NULL,
+    status VARCHAR(50) NOT NULL,
+    product_details JSONB, -- For demonstrating GIN/inverted index concept
+    delivery_address TEXT,
+    notes TEXT
+);
+```
