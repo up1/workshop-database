@@ -2,7 +2,7 @@
 * PostgreSQL index types 
   * B-tree index
   * Inverted Index (GIN and GiST)
-  * Bitmap index
+  * Bitmap Index
 
 ## 1. Generate data for testing
 
@@ -159,3 +159,48 @@ CREATE INDEX idx_orders_main_category ON orders ((product_details ->> 'main_cate
 -- For example, to index the 'main_category' key:
 CREATE INDEX idx_orders_product_details_main_category_gin ON orders USING GIN ((to_tsvector('english', product_details->>'main_category')));
 ```
+
+## 4. Bitmap Index
+* PostgreSQL does not have a direct "Bitmap Index" type
+* Bitmap Heap Scans or Bitmap Index Scans which are an execution plan type
+
+### 4.1 Try to create index for low-cardinality column
+* Index Scan or Bitmap Heap Scan depending on data distribution and selectivity
+
+```
+-- Status is a low-cardinality column
+CREATE INDEX idx_orders_status_btree ON orders (status);
+
+EXPLAIN ANALYZE SELECT * FROM orders WHERE status = 'Pending';
+```
+
+### 4.2 Combine Indexes to trigger Bitmap Heap Scan
+```
+-- Ensure indexes exist
+CREATE INDEX idx_orders_customer_id ON orders (customer_id);
+CREATE INDEX idx_orders_order_date ON orders (order_date);
+
+EXPLAIN ANALYZE SELECT * FROM orders WHERE status = 'Pending' AND customer_id BETWEEN 100000 AND 200000;
+
+EXPLAIN ANALYZE SELECT * FROM orders WHERE status = 'Shipped' AND order_date > '2024-06-01';
+```
+
+## Workshop Conclusion & General Tuning Principles
+* EXPLAIN ANALYZE is your best friend
+  * Always use it to understand how your queries are executing and if indexes are being used
+* Cardinality & Selectivity
+  * High cardinality (many unique values): B-tree is usually excellent for direct lookups and range scans
+  * Low cardinality (few unique values): B-tree can still be useful, but Bitmap Heap Scan might be preferred by the planner when combined with other conditions
+* Write Overhead vs. Read Performance
+  * Indexes speed up reads but slow down writes (INSERT, UPDATE, DELETE)
+  * Balance this trade-off
+  * Don't index every column
+* Disk Space : Indexes consume disk space
+* Maintenance: Indexes need to be maintained during DML operations
+  * Autovacuum is crucial
+  * REINDEX can help with bloat
+* Partial Indexes: Index only a subset of rows 
+  * e.g., CREATE INDEX ON orders (customer_id) WHERE status = 'Pending';
+* Monitoring: Monitor database performance 
+  * e.g., pg_stat_statements, pg_buffercache 
+    * to identify slow queries and underutilized indexes
