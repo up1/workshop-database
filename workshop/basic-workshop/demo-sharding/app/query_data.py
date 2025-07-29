@@ -1,21 +1,6 @@
-import psycopg2
 import random
 from datetime import datetime, timedelta
-
-# Database connections (adjust credentials/ports as needed)
-SHARD_CONFIG = {
-    0: {"dbname": "shard_0_db", "user": "monitoring", "password": "monitorpass", "host": "localhost", "port": "5432"},
-    1: {"dbname": "shard_1_db", "user": "monitoring", "password": "monitorpass", "host": "localhost", "port": "5432"},
-    2: {"dbname": "shard_2_db", "user": "monitoring", "password": "monitorpass", "host": "localhost", "port": "5432"},
-}
-NUM_SHARDS = len(SHARD_CONFIG)
-
-def get_shard_connection(shard_id):
-    config = SHARD_CONFIG[shard_id]
-    return psycopg2.connect(**config)
-
-def get_shard_id(customer_id):
-    return customer_id % NUM_SHARDS
+from db import get_shard_connection, get_shard_id
 
 def get_orders_by_customer(customer_id):
     shard_id = get_shard_id(customer_id)

@@ -1,0 +1,41 @@
+services:
+  pg_shard0:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: shard_0_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: your_password
+    ports:
+      - "54320:5432" # Use different ports
+    volumes:
+      - pg_shard0_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  pg_shard1:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: shard_1_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: your_password
+    ports:
+      - "54321:5432"
+    volumes:
+      - pg_shard1_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  pg_shard2:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: shard_2_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: your_password
+    ports:
+      - "54322:5432"
+    volumes:
+      - pg_shard2_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+
+volumes:
+  pg_shard0_data:
+  pg_shard1_data:
+  pg_shard2_data:
