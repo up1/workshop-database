@@ -119,7 +119,10 @@ GET /order/stats
 
 4. **Run the Application**
    ```bash
-   docker compose up -d
+   # Start database
+   docker compose up -d postgres
+
+   # Start api
    go run main.go
    ```
 
