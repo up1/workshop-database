@@ -21,12 +21,17 @@ $tar xvzf benchbase-postgres.tgz
 $cd benchbase-postgres
 ```
 
-Run with config
+Run with config with TPC-C (Transaction Processing Performance Council - C) benchmark test
+* A single client connection attempting to push 10,000 transactions per second through the database
 * config/postgres/sample_tpcc_config.xml
+  * Terminals => number of client's connections
+  * Workload
 ```
 $java -jar benchbase.jar -b tpcc -c config/postgres/sample_tpcc_config.xml --create=true --load=true --execute=true
 ```
 
 ## Try to improve performance
 * Tuning postgresql parameters
+* Monitoring
+* Iterate
 
