@@ -1,4 +1,12 @@
 services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - DATABASE_URL=postgres://postgres:password@postgres:5432/workshop_db?sslmode=disable
+    ports:
+      - "8080:8080"
   postgres:
     image: postgres:17
     container_name: workshop_postgres

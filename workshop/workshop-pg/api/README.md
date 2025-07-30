@@ -124,6 +124,10 @@ GET /order/stats
 
    # Start api
    go run main.go
+
+   # Or start with Docker
+   docker compose build api
+   docker compose up -d api
    ```
 
 ## Performance Tuning
