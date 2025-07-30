@@ -119,6 +119,7 @@ GET /order/stats
 
 4. **Run the Application**
    ```bash
+   docker compose up -d
    go run main.go
    ```
 
