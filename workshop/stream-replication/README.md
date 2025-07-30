@@ -1,4 +1,7 @@
 # Workshop with Stream Replication
+* Active-standby mode
+* Master-slave
+* DR site
 
 ## 1. Start Cluster
 
@@ -25,13 +28,12 @@ $SELECT * FROM pg_stat_replication;
 $SELECT client_addr, state, sync_state FROM pg_stat_replication;
 ```
 
-### 1.2 Start slave server
+### 1.2 Start slave server (standby)
 
 Change permission
 ```
 $chmod +x replica/standby.sh
 ```
-
 
 Run
 ```
@@ -64,4 +66,7 @@ pg_is_in_recovery
 -------------------
  t
 (1 row)
+
+
+$SELECT * FROM pg_stat_wal_receiver;
 ```
