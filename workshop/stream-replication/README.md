@@ -70,3 +70,15 @@ pg_is_in_recovery
 
 $SELECT * FROM pg_stat_wal_receiver;
 ```
+
+## 2. Important configurations
+* Primary
+  * wal_level
+  * max_wal_senders
+  * wal_keep_size
+  * max_slot_wal_keep_size
+* Standby
+  * hot_standby
+  * max_standby_streaming_delay
+  * hot_standby_feedback
+  * wal_receiver_Status_interval
