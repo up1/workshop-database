@@ -177,3 +177,18 @@ LIMIT 100;
   * Can the application filter more precisely
   * Look for other bottlenecks (CPU, I/O, network)
   * Consider specific hardware or PostgreSQL version features
+
+## 6. Size of Indexs
+```
+SELECT 
+    t.tablename,
+    i.indexrelname,
+    pg_size_pretty(pg_relation_size(i.indexrelid)) AS index_size,
+    pg_get_indexdef(i.indexrelid) AS index_definition,
+    am.amname AS index_type
+FROM pg_stat_user_indexes i
+JOIN pg_tables t ON i.relname = t.tablename
+JOIN pg_class c ON i.indexrelid = c.oid
+JOIN pg_am am ON c.relam = am.oid
+ORDER BY pg_relation_size(i.indexrelid) DESC;
+```
