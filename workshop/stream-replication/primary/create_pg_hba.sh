@@ -10,5 +10,5 @@ cat <<EOF > /var/lib/postgresql/data/pg_hba.conf
 # Allow replication connections from the standby
 local   all             all                                     trust
 host    all             all             0.0.0.0/0               trust
-host    replication     replicator      172.19.0.0/16           trust
+host    replication     replicator      0.0.0.0/0               trust
 EOF
