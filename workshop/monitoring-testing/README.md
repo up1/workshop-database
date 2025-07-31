@@ -89,7 +89,7 @@ Link to metrics
 * http://localhost:9090/targets
 
 Start Grafana
-* [Dashboard for PostgreSQL](PostgreSQL Database)
+* [Dashboard for PostgreSQL](https://grafana.com/grafana/dashboards/9628-postgresql-database/)
 ```
 $docker compose up -d grafana
 $docker compose ps
