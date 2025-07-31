@@ -1,8 +1,13 @@
 # Workshop with index !!
 
+## Query with price
 
-
-## Query
+Index selectivity
+```
+SELECT ROUND(COUNT(DISTINCT price)::NUMERIC / COUNT(*), 2) AS selectivity
+FROM books;
+```
+Explain query
 ```
 EXPLAIN ANALYZE
 SELECT b.isbn, 
