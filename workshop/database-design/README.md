@@ -190,6 +190,7 @@ GROUP BY 1,2;
 CREATE UNIQUE INDEX ON dnorm.mv_daily_product_sales (day, product_id);
 
 -- Zero-downtime refresh
+-- avoid blocking readers !!
 REFRESH MATERIALIZED VIEW CONCURRENTLY dnorm.mv_daily_product_sales;
 ```
 
@@ -200,8 +201,6 @@ WHERE day >= current_date - 14
 ORDER BY day DESC, revenue DESC
 LIMIT 50;
 ```
-
-
 
 ### 1.4 Discussion
 * Normalized
