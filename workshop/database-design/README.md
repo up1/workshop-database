@@ -283,6 +283,19 @@ WHERE order_ts >= date_trunc('month', now()) - interval '1 month'
 CREATE INDEX ON part.orders (order_ts);
 ```
 
+### 2.2 Partition Maintenance & Archiving
+```
+-- Detach old partition (> 24 months) to archive
+-- Example: detach 2023_01 and move to archive schema
+CREATE SCHEMA IF NOT EXISTS archive;
+
+ALTER TABLE part.orders DETACH PARTITION part.orders_2023_01;
+ALTER TABLE part.orders_2023_01 SET SCHEMA archive;
+
+-- Optionally compress / store on cheaper storage, or export to S3, then DROP when allowed
+-- Drop example:
+-- DROP TABLE archive.orders_2023_01;
+```
 
 
 ## 3. Sharding (Multiple nodes)
