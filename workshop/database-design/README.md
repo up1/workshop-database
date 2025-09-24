@@ -299,7 +299,125 @@ ALTER TABLE part.orders_2023_01 SET SCHEMA archive;
 
 
 ## 3. Sharding (Multiple nodes)
+* Single node vs Multiple nodes
 * Use when a single machine’s CPU/IO/Storage becomes the bottleneck or for geographic distribution
 * Trade-offs
   * cross-shard joins become harder
   * you’ll rely on app-level routing or a coordinator
+
+
+### 3.1 Simple Logical Sharding with a View & Routing Trigger (Single code)
+* Keep two identical shard tables (e.g., by customer hash)
+* Present a single UNION ALL view to the app
+* Use an INSTEAD OF INSERT trigger on the view to route rows
+
+Create schema and tables
+```
+CREATE SCHEMA shard;
+
+-- Two shards in the same database (you can place shard_1 in another DB)
+CREATE TABLE shard.orders_0 (LIKE norm.orders INCLUDING ALL);
+CREATE TABLE shard.orders_1 (LIKE norm.orders INCLUDING ALL);
+
+CREATE INDEX ON shard.orders_0 (customer_id);
+CREATE INDEX ON shard.orders_1 (customer_id);
+```
+
+Create view
+```
+CREATE OR REPLACE VIEW shard.orders_all AS
+SELECT * FROM shard.orders_0
+UNION ALL
+SELECT * FROM shard.orders_1;
+```
+
+Create function to routiung data by hash function
+```
+-- Routing function: even customer_id -> shard_0, odd -> shard_1
+CREATE OR REPLACE FUNCTION shard.route_orders_insert()
+RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+  IF (NEW.customer_id % 2 = 0) THEN
+    INSERT INTO shard.orders_0 VALUES (NEW.*);
+  ELSE
+    INSERT INTO shard.orders_1 VALUES (NEW.*);
+  END IF;
+  RETURN NULL; -- consumed by routed insert
+END$$;
+```
+
+Create trigger on view
+```
+-- INSTEAD OF trigger on the view
+CREATE TRIGGER trg_insert_orders_all
+INSTEAD OF INSERT ON shard.orders_all
+FOR EACH ROW EXECUTE FUNCTION shard.route_orders_insert();
+```
+
+Try to insert data
+```
+INSERT INTO shard.orders_all (order_id, customer_id, order_ts, status)
+VALUES (1, 10, now(), 'NEW'), (2, 11, now(), 'PAID');
+```
+
+Query data from view
+```
+SELECT status, count(*) FROM shard.orders_all GROUP BY 1;
+```
+
+
+
+## 4. Data Housekeeping
+* Retention strategy (how long to keep “hot” vs “warm” vs “cold” data)
+* Archiving via partition detach, export, or COPY
+* Vacuum/Analyze/Autovacuum tuning
+  * index maintenance
+  * bloat control
+* Monitoring table growth and slow queries
+* Safe online changes (CONCURRENT index builds, rolling refreshes)
+
+
+### 4.1 Automate monthly archive + routine maintenance
+
+Archival procedure: detach partitions older than N months
+```
+CREATE OR REPLACE PROCEDURE part.archive_old_partitions(months_back int)
+LANGUAGE plpgsql AS $$
+DECLARE
+  part_rec record;
+  cutoff date := (date_trunc('month', now()) - (months_back || ' months')::interval)::date;
+  part_start date;
+BEGIN
+  FOR part_rec IN
+    SELECT inhrelid::regclass AS child
+    FROM pg_inherits
+    WHERE inhparent = 'part.orders'::regclass
+  LOOP
+    -- Extract YYYY_MM from child name; adjust if your naming differs
+    BEGIN
+      part_start := to_date(regexp_replace(part_rec.child::text, '^.*_(\d{4})_(\d{2})$', '\1-\2-01'), 'YYYY-MM-DD');
+    EXCEPTION WHEN others THEN
+      CONTINUE;
+    END;
+
+    IF part_start < cutoff THEN
+      EXECUTE format('ALTER TABLE part.orders DETACH PARTITION %s;', part_rec.child);
+      EXECUTE format('ALTER TABLE %s SET SCHEMA archive;', part_rec.child);
+    END IF;
+  END LOOP;
+END$$;
+```
+
+Call :: (keep last 24 months hot)
+```
+CALL part.archive_old_partitions(24);
+
+ANALYZE part.orders;
+```
+
+Optional: use the pg_cron extension to schedule
+```
+CREATE EXTENSION IF NOT EXISTS pg_cron;
+SELECT cron.schedule('monthly_archive', '0 3 1 * *', $$CALL part.archive_old_partitions(24)$$);
+
+```
