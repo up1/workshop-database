@@ -209,3 +209,84 @@ LIMIT 50;
 * Denormalized
   * pros = fast reads for common reports
   * cons = duplication, ETL/refresh complexity
+
+## 2. Partitioning
+* Use when data is large and naturally sliced by time or key
+* Benefits: partition pruning, faster maintenance (detach/drop old), smaller indexes
+
+### 2.1 Native Range Partitioning by Month (orders)
+```
+CREATE SCHEMA part;
+
+CREATE TABLE part.orders (
+  order_id     BIGSERIAL,
+  customer_id  BIGINT NOT NULL REFERENCES norm.customers(customer_id),
+  order_ts     TIMESTAMPTZ NOT NULL,
+  status       TEXT NOT NULL CHECK (status IN ('NEW','PAID','SHIPPED','CANCELLED')),
+  PRIMARY KEY (order_id, order_ts)
+) PARTITION BY RANGE (order_ts);
+```
+
+Create mounthly partitions
+```
+-- Helper to create monthly partitions (example: 2025)
+DO $$
+DECLARE
+  m int;
+  start_date date;
+  end_date date;
+  part_name text;
+BEGIN
+  FOR m IN 1..12 LOOP
+    start_date := make_date(2025, m, 1);
+    end_date   := (make_date(2025, m, 1) + INTERVAL '1 month')::date;
+    part_name  := format('orders_%s', to_char(start_date, 'YYYY_MM'));
+    EXECUTE format(
+      'CREATE TABLE part.%I PARTITION OF part.orders
+         FOR VALUES FROM (%L) TO (%L);',
+      part_name, start_date, end_date
+    );
+    EXECUTE format('CREATE INDEX ON part.%I (customer_id);', part_name);
+    EXECUTE format('CREATE INDEX ON part.%I (status);', part_name);
+  END LOOP;
+END$$;
+```
+
+Create default partition
+```
+-- Default partition to avoid insert errors outside range
+CREATE TABLE part.orders_default PARTITION OF part.orders DEFAULT;
+```
+
+Insert data from norm.orders
+```
+-- Insert some data from norm.orders (recent months only)
+INSERT INTO part.orders (order_id, customer_id, order_ts, status)
+SELECT order_id, customer_id, order_ts, status
+FROM norm.orders
+WHERE order_ts >= date_trunc('year', now()); 
+```
+
+Query and Analyze
+```
+SELECT count(*)
+FROM part.orders
+
+EXPLAIN ANALYZE
+SELECT count(*)
+FROM part.orders
+WHERE order_ts >= date_trunc('month', now()) - interval '1 month'
+  AND order_ts <  date_trunc('month', now());
+
+
+-- Create index on order_ts for better date range queries
+CREATE INDEX ON part.orders (order_ts);
+```
+
+
+
+## 3. Sharding (Multiple nodes)
+* Use when a single machine’s CPU/IO/Storage becomes the bottleneck or for geographic distribution
+* Trade-offs
+  * cross-shard joins become harder
+  * you’ll rely on app-level routing or a coordinator
