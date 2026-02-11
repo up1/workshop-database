@@ -108,3 +108,33 @@ SELECT
     END as salary_level
 FROM employees;
 ```
+
+## 8. Workshop :: Try by yourself
+```
+CREATE TABLE sales (
+    sale_id SERIAL PRIMARY KEY,
+    product_name VARCHAR(100),
+    category VARCHAR(50),
+    quantity INTEGER,
+    price_per_unit NUMERIC,
+    store_location VARCHAR(50),
+    customer_rating INTEGER
+);
+
+INSERT INTO sales (product_name, category, quantity, price_per_unit, store_location, customer_rating)
+VALUES 
+    ('Laptop', 'Electronics', 1, 1200, 'New York', 5),
+    ('Mouse', 'Electronics', 3, 25, 'New York', NULL),
+    ('Desk Chair', 'Furniture', 2, 150, 'Chicago', 4),
+    ('Monitor', 'Electronics', 2, 300, 'Chicago', 3),
+    ('USB Cable', 'Electronics', 10, 10, NULL, 5),
+    ('Office Desk', 'Furniture', 1, 500, 'New York', 4),
+    ('Keyboard', 'Electronics', 1, 45, 'Chicago', NULL);
+```
+
+Write SQL query from business questions
+1. Handle Missing Data: Show all sales, but if the store_location is NULL, display it as 'Online'.
+2. Transformation: Create a column called total_revenue (quantity * price).
+3. Conditional Logic: Create a column called rating_status. If the rating is 5, call it 'Excellent'. If it's 3 or 4, call it 'Good'. For anything else (including NULL), call it 'Average'.
+4. Filtering: Only include rows where the category is 'Electronics'.
+5. Summarization: Group the data by your new location field and show the total revenue and average rating for each.
