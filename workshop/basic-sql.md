@@ -94,3 +94,17 @@ WHERE department IS NOT NULL
 GROUP BY department
 ORDER BY avg_dept_salary DESC;
 ```
+
+## 7. Data Manipulation and Transformation
+```
+-- Transforming data on the fly
+SELECT 
+    UPPER(last_name) as surname,
+	salary,
+    salary * 1.10 as salary_with_bonus,
+    CASE 
+        WHEN salary > 60000 THEN 'High'
+        ELSE 'Standard'
+    END as salary_level
+FROM employees;
+```
