@@ -138,3 +138,23 @@ Write SQL query from business questions
 3. Conditional Logic: Create a column called rating_status. If the rating is 5, call it 'Excellent'. If it's 3 or 4, call it 'Good'. For anything else (including NULL), call it 'Average'.
 4. Filtering: Only include rows where the category is 'Electronics'.
 5. Summarization: Group the data by your new location field and show the total revenue and average rating for each.
+
+
+Answer
+```
+SELECT 
+    COALESCE(store_location, 'Online') AS location,
+    SUM(quantity * price_per_unit) AS total_revenue,
+    ROUND(AVG(customer_rating), 2) AS avg_rating,
+    COUNT(*) FILTER (WHERE customer_rating IS NOT NULL) AS rated_count,
+    CASE
+      WHEN AVG(customer_rating) >= 5 THEN 'Excellent'
+      WHEN AVG(customer_rating) >= 3 THEN 'Good'
+      ELSE 'Average'
+    END AS customer_rating_level,
+    COUNT(*) AS transaction_count
+FROM sales
+WHERE category = 'Electronics'
+GROUP BY COALESCE(store_location, 'Online')
+ORDER BY total_revenue DESC;
+```
