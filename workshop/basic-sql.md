@@ -26,6 +26,23 @@ INSERT INTO employees (email, first_name, last_name, department, salary)
 VALUES ('demo3@gmail.com', 'Charlie', 'Brown', NULL, 45000);
 ```
 
+Generate 10,000 rows
+```
+-- Insert sample data  10,000 rows
+INSERT INTO employees (email, first_name, last_name, department, salary)
+SELECT
+    'user' || generate_series(1, 10000) || '@example.com' AS email,
+    'FirstName' || generate_series(1, 10000) AS first_name,
+    'LastName' || generate_series(1, 10000) AS last_name,
+    CASE
+        WHEN (random() * 4)::int = 0 THEN 'HR'  
+        WHEN (random() * 4)::int = 1 THEN 'Engineering'
+        WHEN (random() * 4)::int = 2 THEN 'Sales'
+        ELSE 'Marketing'
+    END AS department,
+    (random() * 90000 + 30000)::numeric AS salary;  
+```
+
 ## 3. Query all data
 * [SELECT](https://www.postgresql.org/docs/current/sql-select.html)
 ```
