@@ -204,3 +204,25 @@ FROM generate_series(1, 100);
 
 select * from orders;
 ```
+
+## 10. Working with AI
+```
+AS Expert SQL Generator, please generate a SQL statement 
+from table structure in section [Database]
+and follow from SQL best practices and best performance.
+
+[Database]
+CREATE TABLE employees (
+    id SERIAL PRIMARY KEY,
+    email VARCHAR(50) UNIQUE,
+    first_name VARCHAR(50) NOT NULL,
+    last_name VARCHAR(50),
+    department VARCHAR(50),
+    salary NUMERIC
+);
+
+[Output]
+show only sql statement without any explanation or other text.
+
+Generate when user asks.
+```
