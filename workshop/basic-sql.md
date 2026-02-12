@@ -175,3 +175,32 @@ WHERE category = 'Electronics'
 GROUP BY COALESCE(store_location, 'Online')
 ORDER BY total_revenue DESC;
 ```
+
+## 9. [Enum types in Postgresql](https://www.postgresql.org/docs/current/datatype-enum.html)
+```
+CREATE TYPE order_status AS ENUM ('pending', 'shipped', 'delivered', 'cancelled');
+
+
+CREATE TABLE orders (
+    id SERIAL PRIMARY KEY,
+    order_date TIMESTAMP NOT NULL,
+    amount NUMERIC NOT NULL,
+    status order_status NOT NULL
+);
+
+
+INSERT INTO orders (order_date, amount, status)
+SELECT
+    NOW() - (random() * INTERVAL '365 days') AS order_date,
+    (random() * 1000 + 50)::numeric AS amount,
+    CASE
+        WHEN (random() * 4)::int = 0 THEN 'pending'
+        WHEN (random() * 4)::int = 1 THEN 'shipped'
+        WHEN (random() * 4)::int = 2 THEN 'delivered'
+        ELSE 'cancelled'
+    END::order_status AS status
+FROM generate_series(1, 100);
+
+
+select * from orders;
+```
