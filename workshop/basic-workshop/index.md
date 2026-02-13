@@ -459,3 +459,11 @@ SELECT schemaname,
        analyze_count 
 FROM pg_stat_user_tables;
 ```
+
+## 13. List of query in database
+```
+SELECT query, calls, total_exec_time, mean_exec_time 
+FROM pg_stat_statements 
+ORDER BY total_exec_time DESC 
+LIMIT 10;
+```
