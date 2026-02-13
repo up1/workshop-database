@@ -134,6 +134,9 @@ LIMIT 100;
 
 ## 4. Find the Slow Query in Logs and pg_stat_statements
 ```
+CREATE EXTENSION IF NOT EXISTS pg_stat_statements;
+
+
 SELECT pg_stat_statements_reset();
 
 SELECT query, calls, total_exec_time, mean_exec_time 
