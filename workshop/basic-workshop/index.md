@@ -94,6 +94,9 @@ CREATE INDEX idx_book_title ON book (title);
 3. Analyze query with index
 * Index scan
 ```
+SET enable_seqscan = OFF;
+SET enable_seqscan = ON;
+
 EXPLAIN ANALYZE
 SELECT b.isbn, 
        b.title,
