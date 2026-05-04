@@ -2,6 +2,7 @@
 * Join tables to combine data from multiple tables based on related columns
 * Types of joins: INNER JOIN, LEFT JOIN, RIGHT JOIN, FULL OUTER JOIN
 * Use JOIN to retrieve data from multiple tables in a single query
+* Use sub-query to perform operations on the result of another query
 * Working with orders, products, and customers tables
 
 
@@ -212,4 +213,40 @@ SELECT SUM(o.total_amount)
 FROM orders o
 JOIN customers c ON o.customer_id = c.customer_id
 WHERE c.customer_name = 'Alice Johnson';
+```
+
+## Use sub-query to find customers who have spent more than $1000
+
+Use `IN` for sub-query to find customers who have spent more than $1000
+```
+SELECT customer_name
+FROM customers
+WHERE customer_id IN (
+    SELECT customer_id
+    FROM orders
+    GROUP BY customer_id
+    HAVING SUM(total_amount) > 1000
+);
+```
+
+Improved version using JOIN
+```
+SELECT c.customer_name
+FROM customers c
+JOIN orders o ON c.customer_id = o.customer_id
+GROUP BY c.customer_id, c.customer_name
+HAVING SUM(o.total_amount) > 1000;
+```
+
+Change from `IN` to `EXISTS` for better performance with large datasets
+```
+SELECT c.customer_name
+FROM customers c
+WHERE EXISTS (
+    SELECT 1
+    FROM orders o
+    WHERE o.customer_id = c.customer_id
+    GROUP BY o.customer_id
+    HAVING SUM(o.total_amount) > 1000
+);
 ```
