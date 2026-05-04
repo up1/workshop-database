@@ -6,6 +6,20 @@
 * Data Manipulation and Transformation
 * Summarizing Data
 
+## Start database server with docker
+```
+$docker compose up -d db
+$docker compose ps
+```
+
+PostgreSQL server
+* Host: localhost
+* Port: 5432
+* User: root
+* Password: root
+* Database: test_db
+
+
 ## Create database
 ```
 CREATE DATABASE ecommerce_workshop;
