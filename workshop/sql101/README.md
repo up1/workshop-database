@@ -33,10 +33,10 @@ CREATE TABLE orders (
     order_id SERIAL PRIMARY KEY,
     customer_id INT NOT NULL,
     order_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    status VARCHAR(20),
-    total_amount NUMERIC(10, 2),
-    discount_code VARCHAR(20),
-    shipping_city VARCHAR(50)
+    status VARCHAR(20) NULL,
+    total_amount NUMERIC(10, 2) NULL,
+    discount_code VARCHAR(20) NULL,
+    shipping_city VARCHAR(50) NULL
 );
 ```
 
@@ -45,7 +45,7 @@ CREATE TABLE orders (
 ```
 INSERT INTO orders (customer_id, order_date, status, total_amount, discount_code, shipping_city) VALUES
 (5001, '2024-01-01 10:00:00', 'Shipped', 150.00, 'SAVE10', 'New York'),
-(5002, '2024-01-02 11:30:00', 'Pending', 85.50, NULL, 'Los Angeles'),
+(5002, '2024-01-02 11:30:00', 'Pending', NULL, NULL, 'Los Angeles'),
 (5001, '2024-01-03 14:15:00', 'Shipped', 200.00, 'WELCOME', 'New York'),
 (5003, '2024-01-04 09:45:00', 'Cancelled', 45.00, NULL, 'Chicago'),
 (5004, '2024-01-05 16:20:00', 'Shipped', 310.00, 'SAVE10', 'Miami'),
@@ -68,6 +68,29 @@ SELECT
     CASE WHEN random() > 0.7 THEN 'PROMO20' ELSE NULL END, -- 30% have a discount code (rest NULL)
     (ARRAY['London', 'Paris', 'Berlin', 'Tokyo'])[floor(random() * 4 + 1)]
 FROM generate_series(1, 100);
+```
+
+## Use cases for NULL values
+* Absence of a value or unknown information, such as a discount code for orders that didn't use one
+* Missing or Optional Data: Storing information that isn't available yet, such as an optional middle name or a future delivery date
+* Data Integrity: Indicating that a value is unknown or not applicable, such as a discount code for orders that didn't use one
+* Avoiding Default Values: Preventing the use of default values that might be misleading, such as using NULL instead of 0 for a total_amount when the amount is not yet calculated  
+* Differentiating Between "No Value" and "Zero": Distinguishing between a zero value (which is a valid number) and the absence of a value (NULL), such as a total_amount of 0 for free orders versus NULL for orders that haven't been processed yet
+* NULL values consume very little space (usually just 1 bit in a null bitmap) compared to placeholder strings or numbers, which can save storage space and improve performance when dealing with large datasets
+* Aggregates: Functions like AVG() and SUM() typically ignore NULL values, which prevents them from skewing calculations with "unknowns"
+
+```
+SELECT * FROM orders WHERE discount_code IS NULL; -- Orders without a discount code
+SELECT * FROM orders WHERE discount_code IS NOT NULL; -- Orders with a discount code
+
+--- Aggregate functions ignore NULL values
+SELECT AVG(total_amount) FROM orders; -- Average order amount (ignores NULL total_amount)
+
+SELECT 
+    AVG(total_amount), 
+    SUM(total_amount), COUNT(*), 
+    SUM(total_amount)/COUNT(*) 
+FROM orders;
 ```
 
 ## Counting and Filtering with Conditions
