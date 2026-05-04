@@ -253,3 +253,16 @@ WHERE order_date >= CURRENT_DATE - INTERVAL '30 days'
 GROUP BY order_day
 ORDER BY order_day DESC;
 ```
+
+* Use pre-aggregated tables or materialized views if the daily revenue report is frequently accessed and does not require real-time data
+```
+CREATE MATERIALIZED VIEW daily_revenue AS
+SELECT 
+    DATE(order_date) AS order_day,
+    SUM(total_amount) AS daily_revenue
+FROM orders
+GROUP BY order_day; 
+
+-- Refresh the materialized view daily or as needed
+REFRESH MATERIALIZED VIEW daily_revenue;
+```
