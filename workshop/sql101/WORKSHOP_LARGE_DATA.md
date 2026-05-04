@@ -201,3 +201,55 @@ CREATE INDEX idx_orders_status_amount_covering
 ON orders (status, total_amount)
 INCLUDE (customer_id, product_id, order_id, order_date, discount_code, shipping_city);
 ```
+
+## Order report by daily revenue
+```
+SELECT 
+    DATE(order_date) AS order_day,
+    SUM(total_amount) AS daily_revenue
+FROM orders
+WHERE order_date >= CURRENT_DATE - INTERVAL '30 days'
+GROUP BY order_day
+ORDER BY order_day DESC;
+```
+
+## How to optimize this query for better performance?
+* Ensure there is an index on order_date to speed up the date filtering
+```
+CREATE INDEX idx_orders_order_date ON orders(order_date);
+```
+
+* Consider partitioning the orders table by date to improve query performance for recent data
+```
+-- NOTE: In PostgreSQL, every UNIQUE/PRIMARY KEY on a partitioned table
+-- MUST include all the partitioning columns. Since we partition by
+-- `order_date`, it must be part of the primary key.
+CREATE TABLE orders (
+    order_id SERIAL,
+    customer_id INT NOT NULL,
+    product_id INT NOT NULL,
+    order_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    status VARCHAR(50),
+    total_amount DECIMAL(10, 2),
+    discount_code VARCHAR(50),
+    shipping_city VARCHAR(100),
+    PRIMARY KEY (order_id, order_date)
+) PARTITION BY RANGE (order_date);
+
+CREATE TABLE orders_2024_01 PARTITION OF orders
+    FOR VALUES FROM ('2024-01-01') TO ('2024-02-01');
+
+CREATE TABLE orders_2024_02 PARTITION OF orders
+    FOR VALUES FROM ('2024-02-01') TO ('2024-03-01');
+```
+
+* Use EXPLAIN to analyze the query execution plan and ensure that indexes are being utilized effectively
+```
+EXPLAIN SELECT 
+    DATE(order_date) AS order_day,
+    SUM(total_amount) AS daily_revenue
+FROM orders
+WHERE order_date >= CURRENT_DATE - INTERVAL '30 days'
+GROUP BY order_day
+ORDER BY order_day DESC;
+```
