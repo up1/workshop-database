@@ -224,3 +224,64 @@ GROUP BY customer_id
 HAVING SUM(total_amount) > 100
 ORDER BY total_revenue DESC;
 ```
+
+## Aggregate with View and Materialized View
+
+### 1. Create a view to summarize total revenue by customer
+```
+CREATE VIEW customer_revenue AS
+SELECT 
+    customer_id,
+    SUM(total_amount) AS total_revenue
+FROM orders
+WHERE status = 'Shipped'
+GROUP BY customer_id;
+```
+
+* Query the view
+```
+SELECT * FROM customer_revenue;
+```
+
+### 2. Create a materialized view to store the aggregated data for faster access
+```
+CREATE MATERIALIZED VIEW customer_revenue_mv AS
+SELECT 
+    customer_id,
+    SUM(total_amount) AS total_revenue
+FROM orders
+WHERE status = 'Shipped'
+GROUP BY customer_id;
+```
+* Query the materialized view
+```
+SELECT * FROM customer_revenue_mv;
+```
+* Refresh the materialized view to update the data
+```
+REFRESH MATERIALIZED VIEW customer_revenue_mv;
+```
+
+### 3. Insert a new order and see the difference between the view and materialized view
+```
+INSERT INTO orders (customer_id, order_date, status, total_amount) VALUES
+(5001, '2024-01-07 10:00:00', 'Shipped', 250.00);
+```
+
+* Query the view again to see the updated total revenue for customer_id 5001
+```
+SELECT * FROM customer_revenue;
+```
+
+* Query the materialized view again to see that it still has the old total revenue for customer_id 5001 until we refresh it
+```
+SELECT * FROM customer_revenue_mv;
+```
+
+* Refresh the materialized view to see the updated total revenue for customer_id 5001
+```
+REFRESH MATERIALIZED VIEW customer_revenue_mv;
+
+SELECT * FROM customer_revenue_mv;
+```
+
