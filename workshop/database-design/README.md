@@ -305,7 +305,7 @@ ALTER TABLE part.orders_2023_01 SET SCHEMA archive;
   * you’ll rely on app-level routing or a coordinator
 
 
-### 3.1 Simple Logical Sharding with a View & Routing Trigger (Single code)
+### 3.1 Simple Logical Sharding with a View & Routing Trigger (Single node)
 * Keep two identical shard tables (e.g., by customer hash)
 * Present a single UNION ALL view to the app
 * Use an INSTEAD OF INSERT trigger on the view to route rows
