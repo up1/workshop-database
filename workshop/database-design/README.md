@@ -78,12 +78,12 @@ CREATE INDEX ON norm.payments (order_id);
 
 Insert sample data
 ```
-INSERT INTO norm.customers (full_name, email, region)
-SELECT 'Customer '||g, 'c'||g||'@example.com', (ARRAY['NORTH','SOUTH','EAST','WEST'])[1 + (random()*3)::int]
+INSERT INTO norm.customers (customer_id, full_name, email, region)
+SELECT g, 'Customer '||g, 'c'||g||'@example.com', (ARRAY['NORTH','SOUTH','EAST','WEST'])[1 + (random()*3)::int]
 FROM generate_series(1,200) g;
 
-INSERT INTO norm.products (sku, name, unit_price)
-SELECT 'SKU-'||g, 'Product '||g, round((10 + random()*490)::numeric,2)
+INSERT INTO norm.products (product_id, sku, name, unit_price)
+SELECT g, 'SKU-'||g, 'Product '||g, round((10 + random()*490)::numeric,2)
 FROM generate_series(1,500) g;
 
 -- 5k orders over past 180 days
@@ -101,12 +101,11 @@ SELECT o.order_id,
        p.unit_price
 FROM norm.orders o
 JOIN LATERAL (SELECT unit_price FROM norm.products WHERE product_id = (1 + floor(random()*500))::int) p ON true
-WHERE random() < 0.9;
 
 -- Payments for PAID/SHIPPED orders
 INSERT INTO norm.payments (order_id, paid_ts, amount, method)
 SELECT o.order_id, o.order_ts + interval '1 hour',
-       (SELECT sum(qty*unit_price) FROM norm.order_items oi WHERE oi.order_id = o.order_id),
+       COALESCE((SELECT sum(qty*unit_price) FROM norm.order_items oi WHERE oi.order_id = o.order_id), 0),
        (ARRAY['CARD','BANK','CASH'])[1 + (random()*2)::int]
 FROM norm.orders o
 WHERE o.status IN ('PAID','SHIPPED');
