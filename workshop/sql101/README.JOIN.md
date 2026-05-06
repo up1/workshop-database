@@ -144,7 +144,8 @@ LEFT JOIN products p ON o.product_id = p.product_id;
 
 ### RIGHT JOIN(The "Right-Sided" Join)
 Returns all rows from the right table and matching rows from the left table (NULL if no match
-```SELECT 
+```
+SELECT 
     o.order_id,
     c.customer_name,
     p.product_name,
