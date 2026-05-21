@@ -74,3 +74,12 @@ REFRESH MATERIALIZED VIEW book_price_gt20;
 
 EXPLAIN ANALYZE SELECT * FROM book_price_gt20;
 ```
+
+
+Query all table + total size estimated rows
+```
+SELECT relname AS table_name,
+       pg_size_pretty(pg_total_relation_size(relid)) AS total_size,
+       n_live_tup AS estimated_rows
+FROM pg_stat_user_tables
+ORDER BY pg_total_relation_size(relid) DESC;
