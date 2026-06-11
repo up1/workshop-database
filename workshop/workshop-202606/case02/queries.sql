@@ -87,7 +87,7 @@ ORDER BY child.relname;
 SELECT
     tablename,
     indexname,
-    pg_size_pretty(pg_relation_size(indexrelid)) AS index_size
+    pg_size_pretty(pg_relation_size(pg_class.oid)) AS index_size
 FROM pg_indexes
 JOIN pg_class ON pg_class.relname = pg_indexes.indexname
 WHERE tablename LIKE 'orders_partitioned%'
