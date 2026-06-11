@@ -34,3 +34,16 @@ List of commands
 * \dt : list tables
 * \d : describe table
 * \q : quit
+
+## Case 1: Order listing page
+* List new orders by current date, sorted by created_at desc, with pagination
+* Orders table has 10K–1M new orders per day, with total > 100M rows
+* Query must return results in <100ms at any page depth
+
+## Case 2: Table partitioning for large datasets
+* Orders table has >100M rows, growing by 10K–1M new orders per day
+* Query patterns:
+  * List new orders by current date, sorted by created_at desc, with pagination
+  * List orders by customer_id, sorted by created_at desc, with pagination
+* Design partitioning strategy to optimize query performance for these patterns
+* Implement partitioning and compare query performance before and after
