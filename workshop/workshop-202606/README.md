@@ -47,3 +47,9 @@ List of commands
   * List orders by customer_id, sorted by created_at desc, with pagination
 * Design partitioning strategy to optimize query performance for these patterns
 * Implement partitioning and compare query performance before and after
+
+## Case 3: Connection pooling and scaling
+* Database experiences high connection load during peak hours, leading to performance degradation
+* Implement connection pooling to manage connections efficiently
+* Scale the database to handle increased load, considering options like read replicas or sharding
+* Monitor performance improvements and adjust the strategy as needed
