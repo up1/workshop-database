@@ -53,3 +53,35 @@ FROM orders
 WHERE created_at >= CURRENT_DATE
   AND created_at < CURRENT_DATE + INTERVAL '1 day'
   AND status = 'new';
+
+-- ============================================================
+-- 6. Check size of data and index where table name is 'orders' and index name is 'idx_orders_created_at_status'
+-- ============================================================
+SELECT
+    pg_size_pretty(pg_relation_size('orders')) AS table_size,
+    pg_size_pretty(pg_relation_size('idx_orders_created_at_status')) AS index_size;
+
+
+-- ============================================================
+-- 7. Show slow queries (if any) that have been logged
+--    Note: This requires log_min_duration_statement to be set to a value (e.g. 100ms) in postgresql.conf
+-- ============================================================
+CREATE EXTENSION pg_stat_statements;
+
+
+-- Filter by table name 'orders' if needed
+-- WHERE query LIKE '%orders%'
+SELECT 
+    calls, 
+    ROUND(total_exec_time::numeric, 2) AS total_time_ms,
+    ROUND(mean_exec_time::numeric, 2) AS avg_time_ms,
+    ROUND((100 * total_exec_time / SUM(total_exec_time) OVER())::numeric, 2) AS percentage_of_total_cpu,
+    query 
+FROM pg_stat_statements 
+WHERE query LIKE '%orders%' 
+AND calls > 0
+ORDER BY mean_exec_time DESC 
+LIMIT 10;
+
+-- Reset statistics after testing
+SELECT pg_stat_statements_reset();
