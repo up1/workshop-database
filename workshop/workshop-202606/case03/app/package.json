@@ -1,0 +1,13 @@
+{
+  "name": "case03-api",
+  "version": "1.0.0",
+  "scripts": {
+    "start": "pm2-runtime start ecosystem.config.js",
+    "dev": "node src/index.js"
+  },
+  "dependencies": {
+    "express": "^5.2.1",
+    "pg": "^8.21.0",
+    "pm2": "^7.0.1"
+  }
+}

@@ -1,0 +1,84 @@
+services:
+  db_primary:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: pass
+      POSTGRES_DB: orders
+      POSTGRES_INITDB_ARGS: "-c max_wal_senders=10 -c max_replication_slots=10"
+    volumes:
+      - pgdata_primary:/var/lib/postgresql/data
+      - ./postgres/primary.conf:/etc/postgresql/postgresql.conf:ro
+      - ./postgres/pg_hba.conf:/etc/postgresql/pg_hba.conf:ro
+      - ./init/primary:/docker-entrypoint-initdb.d:ro
+    command: ["postgres", "-c", "config_file=/etc/postgresql/postgresql.conf", "-c", "hba_file=/etc/postgresql/pg_hba.conf"]
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d orders"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # Init container: runs pg_basebackup once, then exits
+  replica_init:
+    image: postgres:17
+    environment:
+      PGPASSWORD: "pass"
+    command: >
+      bash -c "
+        sleep 2 &&
+        if [ -z \"$$(ls -A /var/lib/postgresql/data 2>/dev/null)\" ]; then
+          echo '==> Running pg_basebackup...' &&
+          pg_basebackup -h db_primary -U replicator -D /var/lib/postgresql/data --wal-method=stream -R -P --checkpoint=fast &&
+          echo '==> pg_basebackup done';
+        else
+          echo '==> Data dir exists, skipping pg_basebackup';
+        fi
+      "
+    volumes:
+      - pgdata_replica:/var/lib/postgresql/data
+    depends_on:
+      db_primary:
+        condition: service_healthy
+
+  db_replica:
+    image: postgres:17
+    environment:
+      POSTGRES_INITDB_ARGS: "-c max_connections=200"
+    volumes:
+      - pgdata_replica:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    depends_on:
+      replica_init:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d orders"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build: ./app
+    environment:
+      PRIMARY_HOST: db_primary
+      REPLICA_HOST: db_replica
+      DB_PORT: "5432"
+      DB_USER: user
+      DB_PASSWORD: pass
+      DB_NAME: orders
+      PRIMARY_POOL_MAX: "10"
+      REPLICA_POOL_MAX: "35"
+      PORT: "3000"
+    ports:
+      - "3000:3000"
+    depends_on:
+      db_primary:
+        condition: service_healthy
+      db_replica:
+        condition: service_healthy
+
+volumes:
+  pgdata_primary:
+  pgdata_replica:
