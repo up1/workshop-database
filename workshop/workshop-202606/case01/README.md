@@ -59,7 +59,7 @@ LIMIT 50;
 
 ### Keyset Pagination (page 2+)
 ```sql
--- Pass last row's (created_at, id) from previous page
+-- Pass last row's (created_at, id) from previous page and last_created_at, last_id as parameters
 SELECT id, customer_id, customer_name, status, total_amount, created_at
 FROM orders
 WHERE created_at >= CURRENT_DATE
