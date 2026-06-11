@@ -18,19 +18,19 @@
 ### Step 1: Create Schema
 
 ```bash
-psql -U postgres -d workshop -f schema.sql
+psql -U postgres -d orders -f schema.sql
 ```
 
 ### Step 2: Seed Test Data
 
 ```bash
-psql -U postgres -d workshop -f seed_data.sql
+psql -U postgres -d orders -f seed_data.sql
 ```
 
 ### Step 3: Run Queries
 
 ```bash
-psql -U postgres -d workshop -f queries.sql
+psql -U postgres -d orders -f queries.sql
 ```
 
 ---
